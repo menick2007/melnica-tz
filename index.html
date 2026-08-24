@@ -1257,6 +1257,47 @@ async function flatPayload() {
   return out;
 }
 
+/* У приёмника есть потолок на размер запроса: у Яндекс Облака это 3,5 МБ
+   на JSON. Самое тяжёлое — фотографии, поэтому payload собирается
+   с постепенно уменьшающимися снимками, пока не уложится в лимит.
+   Оригиналы при этом не портятся: после сборки они возвращаются на место. */
+const PAYLOAD_LIMIT = 3.0e6;
+
+async function buildPayload() {
+  const fields = $$('.f[data-t="files"]');
+  const orig = fields.map(f => f._files.map(x => x.data));
+  const levels = [0, 1100, 800, 600, 450];   // 0 — как есть
+  let built = null;
+
+  try {
+    for (const lvl of levels) {
+      for (let i = 0; i < fields.length; i++) {
+        for (let j = 0; j < fields[i]._files.length; j++) {
+          fields[i]._files[j].data = lvl ? await shrinkDataURL(orig[i][j], lvl) : orig[i][j];
+        }
+      }
+      const doc = buildDoc();
+      const cRaw = readField($('#clientBody .f[data-k="cl_contact"]')).raw || {};
+      const body = JSON.stringify({
+        filename: doc.name,
+        client: readField($('#clientBody .f[data-k="cl_name"]')).text,
+        clientEmail: cRaw.mail || "",
+        products: $$("#items .item").map(b => readField($('.f[data-k="p_name"]', b)).text),
+        approved: MODE === "manager",
+        manager: readField($('#mgrBody .f[data-k="mg_name"]')).text,
+        status: readField($('#mgrBody .f[data-k="mg_status"]')).text,
+        html: doc.html,
+        flat: await flatPayload()
+      });
+      built = { body: body, size: body.length, level: lvl };
+      if (body.length <= PAYLOAD_LIMIT) break;
+    }
+  } finally {
+    fields.forEach((f, i) => f._files.forEach((x, j) => { x.data = orig[i][j]; }));
+  }
+  return built;
+}
+
 function buildDoc() {
   const cName = readField($('#clientBody .f[data-k="cl_name"]')).text || "Без названия";
   const date = new Date().toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" });
@@ -1470,24 +1511,25 @@ async function submit() {
   btns.forEach(b => b.disabled = true);
   flash("Отправляем заявку…", "inf");
   try {
-    const doc = buildDoc();
-    const cRaw = readField($('#clientBody .f[data-k="cl_contact"]')).raw || {};
+    const built = await buildPayload();
+
+    if (!built || built.size > PAYLOAD_LIMIT) {
+      const mb = built ? (built.size / 1048576).toFixed(1) : "?";
+      const r = await download();
+      flash("Заявка получилась слишком тяжёлой для автоматической отправки (" + mb + " МБ). " +
+        (r.ok
+          ? "Файл <b>" + esc(r.name) + "</b> сохранён — пришлите его на <a href=\"mailto:" + MAIL_TO + "\">" + MAIL_TO +
+            "</a>, либо уберите часть фотографий и попробуйте снова."
+          : dlError(r.code)), "err");
+      return;
+    }
+
     /* text/plain — чтобы браузер не слал preflight-запрос:
-       Google Apps Script на OPTIONS не отвечает и отправка бы падала */
+       ни Apps Script, ни функция Яндекса на OPTIONS могут не ответить */
     const res = await fetch(SUBMIT_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({
-        filename: doc.name,
-        client: readField($('#clientBody .f[data-k="cl_name"]')).text,
-        clientEmail: cRaw.mail || "",
-        products: $$("#items .item").map(b => readField($('.f[data-k="p_name"]', b)).text),
-        approved: MODE === "manager",
-        manager: readField($('#mgrBody .f[data-k="mg_name"]')).text,
-        status: readField($('#mgrBody .f[data-k="mg_status"]')).text,
-        html: doc.html,
-        flat: await flatPayload()
-      })
+      body: built.body
     });
     if (!res.ok) throw new Error("HTTP " + res.status);
     flash("Заявка отправлена. Мы свяжемся с вами по указанным контактам.", "ok");
