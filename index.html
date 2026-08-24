@@ -197,6 +197,10 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml;charset=utf8
 
 /* «Не допускается» — акцент цветом текста, без заливки */
 .f.danger::before{background:var(--red)}
+/* полоска слева показывает заполненность, а не тип поля,
+   поэтому заполненное поле зеленеет и здесь тоже */
+.f.danger.ok::before{background:var(--green)}
+.f.danger.bad::before{background:var(--red)}
 .f.danger .inp{border-color:var(--red-line);color:var(--red);font-weight:700}
 .f.danger .inp::placeholder{color:var(--faint);font-weight:400}
 .f.danger .inp:focus{border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 18%,transparent)}
