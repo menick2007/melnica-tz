@@ -594,7 +594,7 @@ function label(f) {
 function cardOpt(f, o, name) {
   const id = uid();
   const media = o.img
-    ? '<span class="opt-im"><img src="' + IMG[o.img] + '" alt="' + esc(o.v) + '" loading="lazy"></span>'
+    ? '<span class="opt-im"><img src="' + IMG[o.img] + '" alt="' + esc(o.v) + '"></span>'
     : '<span class="opt-im ph">' + (ICONS[o.ico] || "") + "</span>";
   return '<label class="opt" for="' + id + '">' + media +
     '<span class="opt-cap">' + esc(o.v) + "</span>" +
