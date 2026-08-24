@@ -195,10 +195,12 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml;charset=utf8
 .scale img{margin-top:10px;max-width:330px;width:100%;border-radius:12px;border:1px solid var(--rule);display:block}
 .scale p{font-size:12.5px;color:var(--faint);margin-top:7px;max-width:330px}
 
-/* danger textarea */
+/* «Не допускается» — акцент цветом текста, без заливки */
 .f.danger::before{background:var(--red)}
-.f.danger .inp{border-color:var(--red-line);background:var(--red-soft)}
+.f.danger .inp{border-color:var(--red-line);color:var(--red);font-weight:700}
+.f.danger .inp::placeholder{color:var(--faint);font-weight:400}
 .f.danger .inp:focus{border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 18%,transparent)}
+.f.danger .lbtxt{color:var(--red)}
 
 /* dropzone */
 .dz{border:1.5px dashed var(--field-line-2);border-radius:14px;background:var(--surface-2);padding:18px;text-align:center;cursor:pointer;transition:.16s}
@@ -241,15 +243,15 @@ body.drop-on::after{content:"Отпустите файл заявки";position:
 .f.ro .chip.on,.f.ro .opt.on{opacity:1;filter:none}
 .f.ro .dz,.f.ro .chip[data-fill],.f.ro .th button{display:none}
 .f.ro .tick{opacity:.45}
-body.mgr-mode #mgrBox{border-color:var(--green-line);background:var(--green-soft)}
+body.mgr-mode #mgrBox{display:block;border-color:var(--green-line);background:var(--green-soft)}
 body.mgr-mode #mgrBox>summary .tagm{color:var(--green-dk);background:var(--surface);border-color:var(--green-line)}
 @media(max-width:760px){
   .mbar{top:auto;position:static}
   .mbar-edit{margin-left:0;flex-basis:100%}
 }
 
-/* manager section */
-.mgr{margin-top:28px;border:1px solid var(--rule);border-radius:14px;background:var(--surface-2);overflow:hidden}
+/* manager section — в клиентском режиме скрыт целиком */
+.mgr{display:none;margin-top:28px;border:1px solid var(--rule);border-radius:14px;background:var(--surface-2);overflow:hidden}
 .mgr>summary{cursor:pointer;list-style:none;padding:14px 18px;display:flex;align-items:center;gap:11px;font-weight:600;font-size:14.5px}
 .mgr>summary::-webkit-details-marker{display:none}
 .mgr>summary::after{content:"▾";margin-left:auto;color:var(--faint);transition:transform .2s}
@@ -1007,9 +1009,20 @@ function updateNames() {
    ВАЛИДАЦИЯ + ПРОГРЕСС
    ============================================================ */
 let strict = false;
+
+/* Служебный блок заполняет коммерческий отдел, а не клиент: пока форма
+   в клиентском режиме, эти поля скрыты и отправку не блокируют. */
+function counted(fEl) {
+  return MODE === "manager" || !$("#mgrBody").contains(fEl);
+}
+function badFields() {
+  return $$(".f").filter(f => +f.dataset.req === 2 && counted(f) && !isFilled(f));
+}
+
 function refresh() {
   let done = 0, total = 0;
   $$(".f").forEach(fEl => {
+    if (!counted(fEl)) { fEl.classList.remove("ok", "bad"); return; }
     const req = +fEl.dataset.req, ok = isFilled(fEl);
     fEl.classList.toggle("ok", ok);
     fEl.classList.toggle("bad", strict && req === 2 && !ok);
@@ -1225,7 +1238,7 @@ async function flatPayload() {
 
   out.push({ title: "Клиент", rows: await conv(humanList($("#clientBody"), CLIENT)) });
   const mgr = await conv(humanList($("#mgrBody"), MANAGER));
-  if (mgr.length) out.push({ title: "Служебное — заполняет менеджер Мельницы", rows: mgr });
+  if (mgr.length) out.push({ title: "Служебное — заполняет коммерческий отдел", rows: mgr });
 
   const items = $$("#items .item");
   for (let i = 0; i < items.length; i++) {
@@ -1247,6 +1260,7 @@ function buildDoc() {
   const mgStat = readField($('#mgrBody .f[data-k="mg_status"]')).text;
   const mgDate = readField($('#mgrBody .f[data-k="mg_date"]')).text;
   const approved = MODE === "manager" && mgStat === "Согласовал";
+  const mgRows = humanList($("#mgrBody"), MANAGER);
   const stamp = (MODE === "manager" && mgStat)
     ? '<div class="stamp"><b>' + esc(mgStat) + "</b>" + (mgName ? " · " + esc(mgName) : "") + (mgDate ? " · " + esc(mgDate) : "") + "</div>"
     : "";
@@ -1290,7 +1304,7 @@ function buildDoc() {
     "<h1>Техническое задание на разработку продукции</h1>" +
     '<div class="m">' + esc(cName) + " · сформировано " + esc(date) + "</div>" + stamp + "</header>" +
     "<section><h2><i>1</i> Клиент</h2>" + rowsHTML(humanList($("#clientBody"), CLIENT)) +
-    '<h3 class="blk">Служебное — заполняет менеджер Мельницы</h3>' + rowsHTML(humanList($("#mgrBody"), MANAGER)) + "</section>" +
+    (mgRows.length ? '<h3 class="blk">Служебное — заполняет менеджер Мельницы</h3>' + rowsHTML(mgRows) : "") + "</section>" +
     items +
     '</div><scr' + 'ipt type="application/json" id="tz-data">' +
     JSON.stringify(collect(true)).replace(/</g, "\\u003c") +
@@ -1412,7 +1426,7 @@ function dlError(code) {
    ============================================================ */
 function firstBad() {
   strict = true; refresh();
-  return $$(".f").filter(f => +f.dataset.req === 2 && !isFilled(f))[0] || null;
+  return badFields()[0] || null;
 }
 function flash(text, kind) {
   const m = $("#msg");
@@ -1428,7 +1442,7 @@ async function submit() {
     bad.scrollIntoView({ behavior: "smooth", block: "center" });
     const inp = $("input,textarea,select", bad); if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 400);
     flash("Заполнены не все обязательные поля — они подсвечены красным. Осталось: <b>" +
-      $$(".f").filter(f => +f.dataset.req === 2 && !isFilled(f)).length + "</b>.", "err");
+      badFields().length + "</b>.", "err");
     return;
   }
   if (MODE !== "manager" && !$("#consent").checked) {
