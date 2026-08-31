@@ -1,0 +1,127 @@
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="brand-mk" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 21.5V7.2"/>
+          <path d="M12 11.4c-2.6 0-4.2-1.7-4.2-3.8 2.6 0 4.2 1.7 4.2 3.8Z"/>
+          <path d="M12 11.4c2.6 0 4.2-1.7 4.2-3.8-2.6 0-4.2 1.7-4.2 3.8Z"/>
+          <path d="M12 16.6c-2.6 0-4.2-1.7-4.2-3.8 2.6 0 4.2 1.7 4.2 3.8Z"/>
+          <path d="M12 16.6c2.6 0 4.2-1.7 4.2-3.8-2.6 0-4.2 1.7-4.2 3.8Z"/>
+          <path d="M12 7.2c-1.5-1.1-1.9-2.9-1.1-4.5 1.5 1.1 1.9 2.9 1.1 4.5Z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-n">Мельница</div>
+        <div class="brand-s">ТЗ на разработку продукции</div>
+      </div>
+    </div>
+
+    <div class="top-prog">
+      <div class="top-prog-r"><span>Заполнено обязательных</span><span><b id="pgN">0</b> из <b id="pgM">0</b></span></div>
+      <div class="bar"><i id="pgBar"></i></div>
+    </div>
+
+    <div class="top-act">
+      <span class="saved" id="saved" aria-live="polite"><i></i><span>Черновик сохраняется</span></span>
+      <button class="btn btn-gh btn-sm" id="btnPrint" type="button" title="Распечатать или сохранить в PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+        <span class="lbl">Печать</span>
+      </button>
+      <button class="btn btn-pr btn-sm" id="btnTop" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        <span class="lbl" id="topLbl">Отправить</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mbar" id="mbar" hidden>
+  <div class="mbar-in">
+    <span class="mbar-tag">Коммерческий отдел</span>
+    <span class="mbar-nm" id="mbarName"></span>
+    <label class="mbar-edit"><input type="checkbox" id="allowEdit"> Разрешить правку данных клиента</label>
+    <button class="btn btn-gh btn-sm" id="btnExitMgr" type="button">Выйти из режима</button>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="hero">
+    <h1>Техническое задание<br>на разработку продукции</h1>
+    <p>Заполните форму — она заменяет привычный Excel-файл. Чем точнее описано изделие, тем ближе первый образец будет к тому, что вы ожидаете. У каждого поля есть подсказка: нажмите «?».</p>
+    <div class="legend">
+      <span class="lg req"><b>*</b> Обязательны к заполнению</span>
+      <span class="lg wish"><b>**</b> Крайне желательно, но не обязательно</span>
+      <span class="lg">Черновик сохраняется в браузере автоматически</span>
+    </div>
+    <div class="mload" id="mload">
+      <span class="mload-q">Вы из коммерческого отдела?</span>
+      <button class="btn btn-gh btn-sm" id="btnLoad" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 9 5-5 5 5"/><path d="M12 4v12"/></svg>
+        Загрузить заявку клиента
+      </button>
+      <input type="file" id="loadFile" accept=".html,.json,text/html,application/json" hidden>
+      <span class="mload-h">или перетащите файл заявки на страницу</span>
+    </div>
+  </div>
+
+  <section class="card" id="cardClient">
+    <div class="card-hd">
+      <div class="num">1</div>
+      <div>
+        <h2>Клиент</h2>
+        <p>Установочные данные — заполняются один раз на всю заявку</p>
+      </div>
+    </div>
+    <div class="card-bd">
+      <div id="clientBody"></div>
+
+      <details class="mgr" id="mgrBox">
+        <summary><span class="tagm">Служебное</span> Заполняет менеджер Мельницы</summary>
+        <div class="mgr-bd"><div id="mgrBody"></div></div>
+      </details>
+    </div>
+  </section>
+
+  <div id="items"></div>
+
+  <div class="add-wrap">
+    <button class="btn btn-gh" id="btnAdd" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Добавить ещё изделие
+    </button>
+  </div>
+
+  <div class="foot">
+    <label class="consent">
+      <input type="checkbox" id="consent">
+      <span>Нажимая «Отправить», я даю согласие на обработку персональных данных и соглашаюсь с политикой конфиденциальности <a href="https://fmill.ru/" target="_blank" rel="noopener">fmill.ru</a>.</span>
+    </label>
+
+    <div class="acts">
+      <button class="btn btn-pr" id="btnSend" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        <span id="sendLbl">Отправить заявку</span>
+      </button>
+      <button class="btn btn-gh" id="btnSave" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+        Скачать заявку
+      </button>
+      <button class="btn btn-gh" id="btnPrint2" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+        Печать / PDF
+      </button>
+      <button class="btn btn-gh" id="btnClear" type="button" style="margin-left:auto">Очистить форму</button>
+    </div>
+
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
+
+    <div class="foot-hint">
+      Кнопка «Скачать заявку» собирает готовый файл со всеми ответами и приложенными фото — браузер спросит подтверждение, после чего файл можно переслать на
+      <a href="mailto:info@fmill.ru">info@fmill.ru</a> или показать менеджеру. Данные из формы никуда не уходят автоматически,
+      пока в файл не вписан адрес приёмника заявок.
+    </div>
+  </div>
+</main>
+
+<div id="tip" role="tooltip"></div>
