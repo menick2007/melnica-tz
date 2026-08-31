@@ -186,6 +186,9 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml;charset=utf8
 .opt-ck svg{width:13px;height:13px}
 .opts.sw{grid-template-columns:repeat(auto-fill,minmax(176px,1fr))}
 .sw-c{height:68px;display:block}
+/* вариант «на усмотрение изготовителя» — оттенка нет, вместо него значок */
+.sw-c.free{background:var(--surface-2);display:grid;place-items:center;color:var(--faint)}
+.sw-c.free svg{width:36px;height:36px;opacity:.55}
 
 .scale{margin-top:12px}
 .scale summary{cursor:pointer;font-size:13px;color:var(--green);font-weight:600;list-style:none;display:inline-flex;align-items:center;gap:6px}
@@ -231,7 +234,13 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml;charset=utf8
 .mbar-edit{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);cursor:pointer;margin-left:auto;white-space:nowrap}
 .mbar-edit input{width:16px;height:16px;accent-color:var(--green);cursor:pointer;margin:0}
 
+/* дата заполнения: на экране не нужна, на бумаге обязательна */
+.pdate{display:none}
 .mload{margin-top:16px;padding-top:16px;border-top:1px dashed var(--rule);display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+/* ВРЕМЕННО СКРЫТО по просьбе заказчика: вход коммерческого отдела и выдача
+   html-файла заявки. Разметка и логика на месте — чтобы вернуть, удалите
+   строку ниже. Перетаскивание файла заявки на страницу продолжает работать. */
+.mload,#btnSave,.hint-save{display:none!important}
 .mload-q{font-size:13.5px;color:var(--muted)}
 .mload-h{font-size:12.5px;color:var(--faint)}
 body.mgr-mode .mload{display:none}
@@ -306,6 +315,7 @@ body.mgr-mode #mgrBox>summary .tagm{color:var(--green-dk);background:var(--surfa
 @media print{
   html:root,html:root:not([data-theme="light"]),html:root[data-theme="dark"]{--paper:#fff;--surface:#fff;--surface-2:#fff;--wash:#fff;--ink:#000;--muted:#333;--faint:#555;--rule:#bbb;--rule-soft:#ddd;--field:#fff;--field-line:#ccc;--green:#03832A;--red:#D93125;--shadow:none;--shadow-sm:none;--shadow-lg:none}
   .top,.add-wrap,.foot,.q,.th button,.dz,.item-hd .rm,.hero p,.hero .legend,.scale{display:none!important}
+  .pdate{display:block;margin-top:12px;font-size:13px;color:#333}
   .mgr,.mgr-bd{display:block!important;content-visibility:visible!important}
   .mgr>summary{font-weight:700}
   body{background:#fff}
@@ -376,6 +386,7 @@ body.mgr-mode #mgrBox>summary .tagm{color:var(--green-dk);background:var(--surfa
       <span class="lg wish"><b>**</b> Крайне желательно, но не обязательно</span>
       <span class="lg">Черновик сохраняется в браузере автоматически</span>
     </div>
+    <div class="pdate" id="pdate"></div>
     <div class="mload" id="mload">
       <span class="mload-q">Вы из коммерческого отдела?</span>
       <button class="btn btn-gh btn-sm" id="btnLoad" type="button">
@@ -429,6 +440,10 @@ body.mgr-mode #mgrBox>summary .tagm{color:var(--green-dk);background:var(--surfa
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
         Скачать заявку
       </button>
+      <button class="btn btn-gh" id="btnXlsx" type="button" title="Выгрузить заполненную форму таблицей Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/><path d="m13 13 5 5M18 13l-5 5"/></svg>
+        Скачать в Excel
+      </button>
       <button class="btn btn-gh" id="btnPrint2" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
         Печать / PDF
@@ -439,8 +454,9 @@ body.mgr-mode #mgrBox>summary .tagm{color:var(--green-dk);background:var(--surfa
     <div class="msg" id="msg" role="status" aria-live="polite"></div>
 
     <div class="foot-hint">
-      Кнопка «Скачать заявку» собирает готовый файл со всеми ответами и приложенными фото — браузер спросит подтверждение, после чего файл можно переслать на
-      <a href="mailto:info@fmill.ru">info@fmill.ru</a> или показать менеджеру. Данные из формы никуда не уходят автоматически,
+      Кнопка «Скачать в Excel» выгружает заполненную форму таблицей: графа — значение, по порядку блоков, без фотографий.
+      <span class="hint-save">Кнопка «Скачать заявку» собирает готовый файл со всеми ответами и приложенными фото — браузер спросит подтверждение, после чего файл можно переслать на
+      <a href="mailto:info@fmill.ru">info@fmill.ru</a> или показать менеджеру.</span> Данные из формы никуда не уходят автоматически,
       пока в файл не вписан адрес приёмника заявок.
     </div>
   </div>
@@ -497,7 +513,8 @@ const SHAPES = [
 const PORES = [
   { v: "Мелкопористый",  img: "POR_FINE"   },
   { v: "Среднепористый", img: "POR_MED"    },
-  { v: "Крупнопористый", img: "POR_COARSE" }
+  { v: "Крупнопористый", img: "POR_COARSE" },
+  { v: "На усмотрение изготовителя", ico: "free" }
 ];
 const CUTS = [
   { v: "Продольный неглубокий надрез", img: "CUT_SHALLOW" },
@@ -509,7 +526,8 @@ const CRUST = [
   { v: "От жёлтого до светло-коричневого, без подгорелостей",   g: "linear-gradient(103deg,#F6E3AE,#EBCB89 46%,#D6A75E)" },
   { v: "Румяная",                                               g: "linear-gradient(103deg,#EEBE7C,#D89550 48%,#BE7431)" },
   { v: "От коричневого до тёмно-коричневого, без подгорелостей",g: "linear-gradient(103deg,#B8783D,#8E5322 50%,#603514)" },
-  { v: "Тёмно-коричневый с подгорелостями",                     g: "linear-gradient(103deg,#6E4118,#41220A 58%,#221204)" }
+  { v: "Тёмно-коричневый с подгорелостями",                     g: "linear-gradient(103deg,#6E4118,#41220A 58%,#221204)" },
+  { v: "На усмотрение изготовителя",                            ico: "free" }
 ];
 
 /* ---------- схема полей ---------- */
@@ -554,8 +572,8 @@ const SPEC = [
     hint:"Модель и марка установленного оборудования. Установлены ли расстоечные шкафы, где проходит дефростация." },
   { k:"p_bake", lb:"Режим выпечки после дефростации. Программа выпекания, если установлена", req:2, t:"area", span:2,
     ph:"Без дополнительной дефростации. Выпечка из заморозки 13–15 минут при 200 °C",
-    chips:["Режимы отсутствуют, на усмотрение изготовителя"],
-    note:"В случае отсутствия режимов укажите: «режимы отсутствуют, на усмотрение изготовителя».",
+    chips:["На усмотрение изготовителя"],
+    note:"Если режимы не заданы — нажмите «На усмотрение изготовителя».",
     hint:"Пример: без дополнительной дефростации, выпечка из заморозки 13–15 минут при 200 °C.\nПример: программа №5 — в этом случае, пожалуйста, приложите режимы работы программы." },
   { k:"p_weight", lb:"Вес после допекания", req:2, t:"unit", ph:"0,26", units:["кг","г"],
     hint:"Вес одного изделия после допекания. Пример: 0,26 кг." },
@@ -567,9 +585,12 @@ const SPEC = [
     extra:{ k:"p_shape_ref", ph:"Или укажите позицию из каталога Мельницы" },
     hint:"Выберите ближайшую форму по фото. Либо дайте ссылку на стандартную позицию из каталога Мельницы." },
 
-  { k:"p_h", lb:"Высота, см", req:2, t:"text", ph:"5–6", hint:"Точно либо ориентировочно. Пример: 5–6 см." },
-  { k:"p_l", lb:"Длина, см", req:2, t:"text", ph:"48–50", hint:"Точно либо ориентировочно. Пример: 48–50 см." },
-  { k:"p_w", lb:"Ширина, см", req:2, t:"text", ph:"10–12", hint:"Точно либо ориентировочно. Пример: 10–12 см." },
+  { k:"p_h", lb:"Высота, см", req:2, t:"textchips", ph:"5–6", chips:["На усмотрение изготовителя"],
+    hint:"Точно либо ориентировочно. Пример: 5–6 см.\nЕсли размер не принципиален — нажмите «На усмотрение изготовителя»." },
+  { k:"p_l", lb:"Длина, см", req:2, t:"textchips", ph:"48–50", chips:["На усмотрение изготовителя"],
+    hint:"Точно либо ориентировочно. Пример: 48–50 см.\nЕсли размер не принципиален — нажмите «На усмотрение изготовителя»." },
+  { k:"p_w", lb:"Ширина, см", req:2, t:"textchips", ph:"10–12", chips:["На усмотрение изготовителя"],
+    hint:"Точно либо ориентировочно. Пример: 10–12 см.\nЕсли размер не принципиален — нажмите «На усмотрение изготовителя»." },
 
   { h:"Органолептические характеристики", note:"Как изделие должно выглядеть, пахнуть и ощущаться" },
 
@@ -641,7 +662,8 @@ const SCHEMA_BY_KEY = {};
 const ICONS = {
   round: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4"><circle cx="50" cy="50" r="30"/><path d="M35 40q15 -8 30 0" stroke-width="3"/></svg>',
   none:  '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><circle cx="50" cy="50" r="28"/><path d="M31 69 69 31"/></svg>',
-  other: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M28 62V38a6 6 0 0 1 6-6h32a6 6 0 0 1 6 6v24a6 6 0 0 1-6 6H44l-12 10v-10h2"/><path d="M42 46h16M42 55h10"/></svg>'
+  other: '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M28 62V38a6 6 0 0 1 6-6h32a6 6 0 0 1 6 6v24a6 6 0 0 1-6 6H44l-12 10v-10h2"/><path d="M42 46h16M42 55h10"/></svg>',
+  free:  '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M34 59v15a3 3 0 0 0 3 3h26a3 3 0 0 0 3-3V59"/><path d="M34 59a12 12 0 1 1 3.6-23.4A13 13 0 0 1 50 26a13 13 0 0 1 12.4 9.6A12 12 0 1 1 66 59Z"/><path d="M34 67h32"/></svg>'
 };
 
 /* ============================================================
@@ -667,7 +689,10 @@ function cardOpt(f, o, name) {
 }
 function swOpt(f, o, name) {
   const id = uid();
-  return '<label class="opt" for="' + id + '"><span class="sw-c" style="background:' + o.g + '"></span>' +
+  const media = o.g
+    ? '<span class="sw-c" style="background:' + o.g + '"></span>'
+    : '<span class="sw-c free">' + (ICONS[o.ico] || "") + "</span>";
+  return '<label class="opt" for="' + id + '">' + media +
     '<span class="opt-cap">' + esc(o.v) + "</span>" +
     '<span class="opt-ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"/></svg></span>' +
     '<input type="radio" id="' + id + '" name="' + name + '" value="' + esc(o.v) + '" data-r="opt"></label>';
@@ -1048,6 +1073,17 @@ function onChange() {
 /* ============================================================
    СБОР ДАННЫХ
    ============================================================ */
+
+/* Дата заполнения проставляется при первом сохранении черновика и дальше едет
+   вместе с данными — в файле заявки, в документе, в таблице. Поэтому в
+   утверждённом ФС стоит день, когда заявку заполнил клиент, а не день,
+   когда менеджер открыл файл. */
+let filledAt = null;
+function fillDate() {
+  const d = filledAt ? new Date(filledAt) : new Date();
+  return isNaN(d.getTime()) ? "" : d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 function collect(withFiles) {
   const rd = host => {
     const o = {};
@@ -1061,6 +1097,7 @@ function collect(withFiles) {
   return {
     v: 1,
     ts: new Date().toISOString(),
+    filledAt: filledAt || new Date().toISOString(),
     client: rd($("#clientBody")),
     manager: rd($("#mgrBody")),
     items: $$("#items .item").map(b => rd(b))
@@ -1068,6 +1105,7 @@ function collect(withFiles) {
 }
 function apply(d) {
   if (!d) return;
+  filledAt = d.filledAt || d.ts || filledAt;
   $$(".f", $("#clientBody")).forEach(f => writeField(f, d.client && d.client[f.dataset.k]));
   $$(".f", $("#mgrBody")).forEach(f => writeField(f, d.manager && d.manager[f.dataset.k]));
   $("#items").innerHTML = ""; itemSeq = 0;
@@ -1084,6 +1122,7 @@ function pack(withFiles) {
   return JSON.stringify(d);
 }
 function save() {
+  if (!filledAt) filledAt = new Date().toISOString();
   const el = $("#saved");
   const key = MODE === "manager" ? LS_M : LS_C;
   try {
@@ -1191,6 +1230,10 @@ function humanList(host, list) {
   });
   return rows;
 }
+/* Блок клиента во всех выгрузках начинается с даты заполнения. */
+function clientRows() {
+  return [{ lb: "Дата заполнения", text: fillDate() }].concat(humanList($("#clientBody"), CLIENT));
+}
 function rowsHTML(rows) {
   if (!rows.length) return '<p class="empty">— не заполнено —</p>';
   return rows.map(r => {
@@ -1240,7 +1283,7 @@ async function flatPayload() {
     return res;
   };
 
-  out.push({ title: "Клиент", rows: await conv(humanList($("#clientBody"), CLIENT)) });
+  out.push({ title: "Клиент", rows: await conv(clientRows()) });
   const mgr = await conv(humanList($("#mgrBody"), MANAGER));
   if (mgr.length) out.push({ title: "Служебное — заполняет коммерческий отдел", rows: mgr });
 
@@ -1304,7 +1347,6 @@ function buildDoc() {
   const mgName = readField($('#mgrBody .f[data-k="mg_name"]')).text;
   const mgStat = readField($('#mgrBody .f[data-k="mg_status"]')).text;
   const mgDate = readField($('#mgrBody .f[data-k="mg_date"]')).text;
-  const approved = MODE === "manager" && mgStat === "Согласовал";
   const mgRows = humanList($("#mgrBody"), MANAGER);
   const stamp = (MODE === "manager" && mgStat)
     ? '<div class="stamp"><b>' + esc(mgStat) + "</b>" + (mgName ? " · " + esc(mgName) : "") + (mgDate ? " · " + esc(mgDate) : "") + "</div>"
@@ -1348,15 +1390,23 @@ function buildDoc() {
     '<header><div class="t">Фабрика Мельница · fmill.ru</div>' +
     "<h1>Техническое задание на разработку продукции</h1>" +
     '<div class="m">' + esc(cName) + " · сформировано " + esc(date) + "</div>" + stamp + "</header>" +
-    "<section><h2><i>1</i> Клиент</h2>" + rowsHTML(humanList($("#clientBody"), CLIENT)) +
+    "<section><h2><i>1</i> Клиент</h2>" + rowsHTML(clientRows()) +
     (mgRows.length ? '<h3 class="blk">Служебное — заполняет менеджер Мельницы</h3>' + rowsHTML(mgRows) : "") + "</section>" +
     items +
     '</div><scr' + 'ipt type="application/json" id="tz-data">' +
     JSON.stringify(collect(true)).replace(/</g, "\\u003c") +
     "<\/script></body></html>";
 
-  const base = "ТЗ_" + cName.replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 60) + "_" + new Date().toISOString().slice(0, 10);
-  return { html: html, name: base + (approved ? "_утверждено" : "") + ".html" };
+  return { html: html, name: fileBase() + ".html" };
+}
+
+/* Имя файла общее для всех выгрузок: html-заявка, таблица Excel, csv. */
+function fileBase() {
+  const cName = readField($('#clientBody .f[data-k="cl_name"]')).text || "Без названия";
+  const mgStat = readField($('#mgrBody .f[data-k="mg_status"]')).text;
+  const approved = MODE === "manager" && mgStat === "Согласовал";
+  return "ТЗ_" + cName.replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 60) +
+    "_" + new Date().toISOString().slice(0, 10) + (approved ? "_утверждено" : "");
 }
 /* В просмотрщике Artifact страница не может скачать файл сама — это делает
    возможность downloads. В обычном браузере (локальный файл, свой хостинг)
@@ -1398,6 +1448,298 @@ async function download() {
   document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   return { ok: true, name: d.name };
+}
+
+/* ============================================================
+   ВЫГРУЗКА В EXCEL
+   .xlsx собирается прямо в браузере: минимальный zip без сжатия
+   плюс несколько xml-частей. Библиотек нет — страница остаётся
+   одним самодостаточным файлом. Фотографии в таблицу не идут:
+   нужна форма с графами, а снимки лежат в файле заявки и в PDF.
+   ============================================================ */
+const CRC_T = (function () {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(buf) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) c = CRC_T[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+/* zip методом «store»: содержимое кладётся как есть, без deflate —
+   xml сжимать нечем, зато не нужна библиотека компрессии. */
+function zipStore(files) {
+  const enc = new TextEncoder();
+  const parts = [], central = [];
+  let offset = 0;
+
+  files.forEach(f => {
+    const nm = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data);
+
+    const lh = new Uint8Array(30 + nm.length), lv = new DataView(lh.buffer);
+    lv.setUint32(0, 0x04034b50, true);   // сигнатура локального заголовка
+    lv.setUint16(4, 20, true);           // нужная версия распаковщика
+    lv.setUint16(6, 0x0800, true);       // имена в UTF-8
+    lv.setUint32(14, crc, true);
+    lv.setUint32(18, data.length, true);
+    lv.setUint32(22, data.length, true);
+    lv.setUint16(26, nm.length, true);
+    lh.set(nm, 30);
+
+    const ch = new Uint8Array(46 + nm.length), cv = new DataView(ch.buffer);
+    cv.setUint32(0, 0x02014b50, true);   // сигнатура записи каталога
+    cv.setUint16(4, 20, true);
+    cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0x0800, true);
+    cv.setUint32(16, crc, true);
+    cv.setUint32(20, data.length, true);
+    cv.setUint32(24, data.length, true);
+    cv.setUint16(28, nm.length, true);
+    cv.setUint32(42, offset, true);
+    ch.set(nm, 46);
+
+    parts.push(lh, data);
+    central.push(ch);
+    offset += lh.length + data.length;
+  });
+
+  const cdSize = central.reduce((s, c) => s + c.length, 0);
+  const end = new Uint8Array(22), ev = new DataView(end.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, files.length, true);
+  ev.setUint16(10, files.length, true);
+  ev.setUint32(12, cdSize, true);
+  ev.setUint32(16, offset, true);
+
+  const all = parts.concat(central, [end]);
+  const out = new Uint8Array(all.reduce((s, p) => s + p.length, 0));
+  let p = 0;
+  all.forEach(chunk => { out.set(chunk, p); p += chunk.length; });
+  return out;
+}
+
+function xe(s) {
+  const str = String(s == null ? "" : s);
+  let out = "";
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    if (c === 13 || c === 10) {                       // перенос строки внутри ячейки
+      if (c === 13 && str.charCodeAt(i + 1) === 10) i++;
+      out += "&#10;";
+      continue;
+    }
+    if (c < 32) continue;                             // прочие управляющие символы xml не принимает
+    const ch = str.charAt(i);
+    out += ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : ch === ">" ? "&gt;" : ch === String.fromCharCode(34) ? "&quot;" : ch;
+  }
+  return out;
+}
+function xlCell(ref, style, text) {
+  if (text == null || text === "") return '<c r="' + ref + '" s="' + style + '"/>';
+  return '<c r="' + ref + '" s="' + style + '" t="inlineStr"><is><t xml:space="preserve">' + xe(text) + "</t></is></c>";
+}
+
+/* Все графы блока подряд — в отличие от документа, пустые тоже:
+   в Excel уезжает форма целиком, чтобы её было видно как бланк. */
+function excelRows(host, list) {
+  const rows = [];
+  list.forEach(f => {
+    if (f.h) { rows.push({ k: "sub", a: f.h }); return; }
+    const fEl = $('.f[data-k="' + f.k + '"]', host);
+    if (!fEl) return;
+    const r = readField(fEl);
+    if (f.t === "files") {
+      const n = (r.files || []).length;
+      rows.push({ k: "pair", a: f.lb, b: n ? n + " шт. — вложены в файл заявки" : "" });
+      return;
+    }
+    rows.push({ k: "pair", a: f.lb, b: r.text, danger: f.danger });
+  });
+  return rows;
+}
+
+function excelModel() {
+  const cName = readField($('#clientBody .f[data-k="cl_name"]')).text || "Без названия";
+  const date = new Date().toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" });
+  const mgStat = readField($('#mgrBody .f[data-k="mg_status"]')).text;
+  const mgName = readField($('#mgrBody .f[data-k="mg_name"]')).text;
+  const mgDate = readField($('#mgrBody .f[data-k="mg_date"]')).text;
+
+  const R = [];
+  R.push({ k: "title", a: "Техническое задание на разработку продукции" });
+  R.push({ k: "meta", a: cName + " · сформировано " + date });
+  if (MODE === "manager" && mgStat) R.push({ k: "meta", a: [mgStat, mgName, mgDate].filter(Boolean).join(" · ") });
+
+  R.push({ k: "gap" });
+  R.push({ k: "sec", a: "1. Клиент" });
+  R.push({ k: "pair", a: "Дата заполнения", b: fillDate() });
+  excelRows($("#clientBody"), CLIENT).forEach(r => R.push(r));
+
+  const mg = excelRows($("#mgrBody"), MANAGER);
+  if (MODE === "manager" || mg.some(r => r.b)) {
+    R.push({ k: "sub", a: "Служебное — заполняет менеджер Мельницы" });
+    mg.forEach(r => R.push(r));
+  }
+
+  $$("#items .item").forEach((b, i) => {
+    const nm = readField($('.f[data-k="p_name"]', b)).text || "без наименования";
+    R.push({ k: "gap" });
+    R.push({ k: "sec", a: "Изделие " + (i + 1) + " — " + nm });
+    R.push({ k: "sub", a: "2. Характеристика" });
+    excelRows($(".body-spec", b), SPEC).forEach(r => R.push(r));
+    R.push({ k: "sub", a: "3. Фото и референс" });
+    excelRows($(".body-photo", b), PHOTOS).forEach(r => R.push(r));
+    R.push({ k: "sub", a: "4. Хранение и упаковка" });
+    excelRows($(".body-store", b), STORAGE).forEach(r => R.push(r));
+  });
+  return R;
+}
+
+const XL_STYLES =
+  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+  '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+  '<fonts count="6">' +
+    '<font><sz val="11"/><color rgb="FF15211A"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="16"/><color rgb="FF15211A"/><name val="Calibri"/></font>' +
+    '<font><sz val="10"/><color rgb="FF586A5E"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="11"/><color rgb="FF02661F"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="11"/><color rgb="FFD93125"/><name val="Calibri"/></font>' +
+  '</fonts>' +
+  '<fills count="4">' +
+    '<fill><patternFill patternType="none"/></fill>' +
+    '<fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF03832A"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFE6F4EA"/><bgColor indexed="64"/></patternFill></fill>' +
+  '</fills>' +
+  '<borders count="2">' +
+    '<border><left/><right/><top/><bottom/><diagonal/></border>' +
+    '<border><left/><right/><top/><bottom style="thin"><color rgb="FFDCE6DB"/></bottom><diagonal/></border>' +
+  '</borders>' +
+  '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+  '<cellXfs count="8">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="center"/></xf>' +
+    '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="center"/></xf>' +
+    '<xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center" indent="1"/></xf>' +
+    '<xf numFmtId="0" fontId="4" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center" indent="1"/></xf>' +
+    '<xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="5" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>' +
+  '</cellXfs>' +
+  '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+  '</styleSheet>';
+
+function xlsxSheet(R) {
+  let n = 0, body = "";
+  const merges = [];
+  R.forEach(row => {
+    n++;
+    if (row.k === "gap") { body += '<row r="' + n + '" ht="7" customHeight="1"/>'; return; }
+    if (row.k === "pair") {
+      body += '<row r="' + n + '">' + xlCell("A" + n, 5, row.a) + xlCell("B" + n, row.danger ? 7 : 6, row.b) + "</row>";
+      return;
+    }
+    const st = row.k === "title" ? 1 : row.k === "meta" ? 2 : row.k === "sec" ? 3 : 4;
+    const ht = row.k === "title" ? 28 : row.k === "meta" ? 17 : row.k === "sec" ? 23 : 20;
+    body += '<row r="' + n + '" ht="' + ht + '" customHeight="1">' +
+      xlCell("A" + n, st, row.a) + xlCell("B" + n, st, "") + "</row>";
+    merges.push("A" + n + ":B" + n);
+  });
+
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<dimension ref="A1:B' + Math.max(n, 1) + '"/>' +
+    '<sheetViews><sheetView showGridLines="0" tabSelected="1" workbookViewId="0"/></sheetViews>' +
+    '<sheetFormatPr defaultRowHeight="15"/>' +
+    '<cols><col min="1" max="1" width="38" customWidth="1"/><col min="2" max="2" width="64" customWidth="1"/></cols>' +
+    "<sheetData>" + body + "</sheetData>" +
+    (merges.length ? '<mergeCells count="' + merges.length + '">' +
+      merges.map(m => '<mergeCell ref="' + m + '"/>').join("") + "</mergeCells>" : "") +
+    '<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>' +
+    '<pageSetup paperSize="9" orientation="portrait"/>' +
+    "</worksheet>";
+}
+
+function buildXlsx() {
+  const files = [
+    { name: "[Content_Types].xml", text:
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      "</Types>" },
+    { name: "_rels/.rels", text:
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+      "</Relationships>" },
+    { name: "xl/workbook.xml", text:
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" ' +
+      'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      '<sheets><sheet name="ТЗ" sheetId="1" r:id="rId1"/></sheets></workbook>' },
+    { name: "xl/_rels/workbook.xml.rels", text:
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+      "</Relationships>" },
+    { name: "xl/styles.xml", text: XL_STYLES },
+    { name: "xl/worksheets/sheet1.xml", text: xlsxSheet(excelModel()) }
+  ];
+  return { name: fileBase() + ".xlsx", bytes: zipStore(files) };
+}
+
+/* Запасной формат: в просмотрщике Artifact сохранять .xlsx нельзя,
+   разрешён .csv — Excel открывает его так же. */
+function buildCsv() {
+  const q = s => (/[";\n]/.test(String(s)) ? '"' + String(s).replace(/"/g, '""') + '"' : String(s));
+  const lines = excelModel().map(row => {
+    if (row.k === "gap") return "";
+    if (row.k === "pair") return q(row.a) + ";" + q(row.b || "");
+    return q(row.a) + ";";
+  });
+  /* BOM в начале — иначе Excel читает кириллицу как крокозябры */
+  return { name: fileBase() + ".csv", text: String.fromCharCode(0xFEFF) + lines.join(String.fromCharCode(13, 10)) };
+}
+
+async function downloadXlsx() {
+  const wb = buildXlsx();
+  const dl = await downloads();
+
+  if (dl) {
+    try {
+      await dl.save({ filename: wb.name, data: wb.bytes });
+      return { ok: true, name: wb.name };
+    } catch (e) {
+      const code = e && e.code;
+      if (code === "rejected_extension" || code === "extension_not_enabled") {
+        const csv = buildCsv();
+        try {
+          await dl.save({ filename: csv.name, data: csv.text });
+          return { ok: true, name: csv.name, csv: true };
+        } catch (e2) { return { ok: false, code: (e2 && e2.code) || "unavailable" }; }
+      }
+      return { ok: false, code: code || "unavailable" };
+    }
+  }
+
+  const b = new Blob([wb.bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b); a.download = wb.name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  return { ok: true, name: wb.name };
 }
 
 /* Письмо собирается коротким: кириллица в адресной строке кодируется
@@ -1612,8 +1954,19 @@ $("#btnSave").addEventListener("click", async () => {
       : "Файл заявки сохранён: <b>" + esc(r.name) + "</b>. Внутри — все заполненные поля и приложенные фото.", "ok");
   } finally { b.disabled = false; }
 });
+$("#btnXlsx").addEventListener("click", async () => {
+  const b = $("#btnXlsx"); b.disabled = true;
+  try {
+    const r = await downloadXlsx();
+    if (!r.ok) { flash(dlError(r.code), "err"); return; }
+    flash(r.csv
+      ? "Здесь файл Excel сохранить нельзя, поэтому заявка выгружена таблицей <b>" + esc(r.name) + "</b> — Excel открывает её так же."
+      : "Таблица заявки сохранена: <b>" + esc(r.name) + "</b>. Внутри — все графы формы по порядку, без фотографий.", "ok");
+  } finally { b.disabled = false; }
+});
 let mgrWasOpen = null;
 window.addEventListener("beforeprint", () => {
+  $("#pdate").textContent = "Дата заполнения: " + fillDate();
   const m = $("#mgrBox");
   if (mgrWasOpen === null) mgrWasOpen = m.open;
   m.open = true;
@@ -1644,14 +1997,20 @@ $("#allowEdit").addEventListener("change", e => {
   applyLock();
 });
 
-/* перетаскивание файла заявки в любое место страницы
-   (зоны загрузки фото обрабатывают свой drop сами) */
+/* Перетаскивание файла заявки на страницу — второй вход коммерческого отдела.
+   ВРЕМЕННО ОТКЛЮЧЁН вместе с плашкой «Вы из коммерческого отдела?» и кнопкой
+   «Скачать заявку»: поставьте true, чтобы вернуть. Кнопка «Загрузить заявку
+   клиента» скрыта отдельно, в стилях part-a.html. */
+const DROP_TZ = false;
+
+/* Файл, брошенный мимо зон загрузки фото, гасим в любом случае — иначе браузер
+   откроет его вместо страницы и заполненная форма пропадёт с экрана. */
 const overDz = e => !!(e.target && e.target.closest && e.target.closest(".dz"));
 document.addEventListener("dragover", e => {
   if (overDz(e) || !e.dataTransfer) return;
   if (Array.prototype.indexOf.call(e.dataTransfer.types || [], "Files") < 0) return;
   e.preventDefault();
-  document.body.classList.add("drop-on");
+  if (DROP_TZ) document.body.classList.add("drop-on");
 });
 document.addEventListener("dragleave", e => { if (!e.relatedTarget) document.body.classList.remove("drop-on"); });
 document.addEventListener("drop", e => {
@@ -1660,6 +2019,7 @@ document.addEventListener("drop", e => {
   const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
   if (!f) return;
   e.preventDefault();
+  if (!DROP_TZ) return;
   if (/\.(html?|json)$/i.test(f.name)) openFile(f);
   else flash("Это не файл заявки. Перетащите <b>ТЗ_….html</b>, полученный от клиента.", "err");
 });

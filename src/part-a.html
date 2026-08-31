@@ -170,6 +170,9 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml;charset=utf8
 .opt-ck svg{width:13px;height:13px}
 .opts.sw{grid-template-columns:repeat(auto-fill,minmax(176px,1fr))}
 .sw-c{height:68px;display:block}
+/* вариант «на усмотрение изготовителя» — оттенка нет, вместо него значок */
+.sw-c.free{background:var(--surface-2);display:grid;place-items:center;color:var(--faint)}
+.sw-c.free svg{width:36px;height:36px;opacity:.55}
 
 .scale{margin-top:12px}
 .scale summary{cursor:pointer;font-size:13px;color:var(--green);font-weight:600;list-style:none;display:inline-flex;align-items:center;gap:6px}
@@ -215,7 +218,13 @@ select.inp{appearance:none;background-image:url("data:image/svg+xml;charset=utf8
 .mbar-edit{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);cursor:pointer;margin-left:auto;white-space:nowrap}
 .mbar-edit input{width:16px;height:16px;accent-color:var(--green);cursor:pointer;margin:0}
 
+/* дата заполнения: на экране не нужна, на бумаге обязательна */
+.pdate{display:none}
 .mload{margin-top:16px;padding-top:16px;border-top:1px dashed var(--rule);display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+/* ВРЕМЕННО СКРЫТО по просьбе заказчика: вход коммерческого отдела и выдача
+   html-файла заявки. Разметка и логика на месте — чтобы вернуть, удалите
+   строку ниже. Перетаскивание файла заявки на страницу продолжает работать. */
+.mload,#btnSave,.hint-save{display:none!important}
 .mload-q{font-size:13.5px;color:var(--muted)}
 .mload-h{font-size:12.5px;color:var(--faint)}
 body.mgr-mode .mload{display:none}
@@ -290,6 +299,7 @@ body.mgr-mode #mgrBox>summary .tagm{color:var(--green-dk);background:var(--surfa
 @media print{
   html:root,html:root:not([data-theme="light"]),html:root[data-theme="dark"]{--paper:#fff;--surface:#fff;--surface-2:#fff;--wash:#fff;--ink:#000;--muted:#333;--faint:#555;--rule:#bbb;--rule-soft:#ddd;--field:#fff;--field-line:#ccc;--green:#03832A;--red:#D93125;--shadow:none;--shadow-sm:none;--shadow-lg:none}
   .top,.add-wrap,.foot,.q,.th button,.dz,.item-hd .rm,.hero p,.hero .legend,.scale{display:none!important}
+  .pdate{display:block;margin-top:12px;font-size:13px;color:#333}
   .mgr,.mgr-bd{display:block!important;content-visibility:visible!important}
   .mgr>summary{font-weight:700}
   body{background:#fff}
